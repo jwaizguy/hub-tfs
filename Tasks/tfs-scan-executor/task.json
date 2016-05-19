@@ -1,0 +1,98 @@
+{
+  "id": "b396fde0-1aa2-11e6-a178-4b15f5ed2cab",
+  "name": "BlackDuckHubScan",
+  "friendlyName": "Black Duck Hub Scan",
+  "description": "Execute a Black Duck Hub scan against your build",
+  "author": "Black Duck Software, Inc.",
+  "category": "Utility",
+  "visibility": [
+    "Build",
+    "Release"
+  ],
+  "demands": [],
+  "version": {
+    "Major": "0",
+    "Minor": "1",
+    "Patch": "0"
+  },
+  "minimumAgentVersion": "1.95.0",
+  "instanceNameFormat": "Execute a Black Duck Hub scan against your build $(message)",
+  "inputs": [
+    {
+      "name": "HubUsername",
+      "type": "string",
+      "label": "Username",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The username to access your Black Duck Hub instance."
+    },
+    {
+      "name": "HubPassword",
+      "type": "string",
+      "label": "Password",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The password to access your Black Duck Hub instance."
+    },
+    {
+      "name": "HubScheme",
+      "type": "pickList",
+      "label": "Scheme",
+      "required": false,
+      "defaultValue": "http",
+      "options": {
+        "http": "http",
+        "https": "https"
+      }
+    },
+    {
+      "name": "HubHost",
+      "type": "string",
+      "label": "Host",
+      "defaultValue": "",
+      "required": true
+    },
+    {
+      "name": "HubPort",
+      "type": "string",
+      "label": "Port",
+      "defaultValue": "",
+      "required": true
+    },
+    {
+      "name": "HubProjectName",
+      "type": "string",
+      "label": "Project Name",
+      "defaultValue": "",
+      "required": true
+    },
+    {
+      "name": "HubRelease",
+      "type": "string",
+      "label": "Project Version",
+      "defaultValue": "",
+      "required": true
+    },
+    {
+      "name": "HubFailOnPolicyViolation",
+      "type": "boolean",
+      "label": "Fail the Build for Hub Policy Violations",
+      "required": false
+    },
+    {
+      "name": "HubScanTimeout",
+      "type": "string",
+      "label": "Scan Timeout",
+      "defaultValue": "5",
+      "required": true,
+      "helpMarkDown": "In minutes (set to zero for no timeout.)"
+    }
+  ],
+  "execution": {
+    "PowerShell": {
+      "target": "$(currentDirectory)\\tfs-scan-executor.ps1",
+      "argumentFormat": "",
+      "workingDirectory": "$(currentDirectory)"
+    }
+  }
+}

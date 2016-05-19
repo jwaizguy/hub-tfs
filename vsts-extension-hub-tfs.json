@@ -1,0 +1,56 @@
+﻿{
+  "manifestVersion": 1.0,
+  "id": "hub-tfs",
+  "version": "0.1.0",
+  "name": "Black Duck Hub Scan",
+  "publisher": "black-duck-software",
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "tags": [
+    "Black Duck",
+    "Continuous Integration",
+    "Security",
+    "Open Source"
+  ],
+  "description": "Execute a Black Duck Hub scan against your build",
+  "categories": [
+    "Build and release"
+  ],
+  "icons": {
+    "default": "images/bds_default.png"
+  },
+  "branding": {
+    "color": "#00639c",
+    "theme": "dark"
+  },
+  "files": [
+    {
+      "path": "Tasks/tfs-scan-executor"
+    }
+  ],
+  "content": {
+    "details": {
+      "path": "docs/extension-overview.md"
+    }
+  },
+  "links": {
+    "getstarted": {
+      "uri": "https://github.com/blackducksoftware/hub-tfs"
+    }
+  },
+  "contributions": [
+    {
+      "id": "hub.tfs.scan",
+      "type": "ms.vss-distributed-task.task",
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
+      "properties": {
+        "name": "Tasks/tfs-scan-executor"
+      }
+    }
+  ]
+}
