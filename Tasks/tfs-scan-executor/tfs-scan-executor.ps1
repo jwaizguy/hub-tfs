@@ -33,7 +33,7 @@ If (Test-Path $zip){
     }
 }
 
-function GetScanStatus($jsonData, $HubSession, $HubScanTimeout) 
+function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) 
 {	
 	#Start timer based on HubScanTimeout. If the scan has not completed in the specified amount of time, exit the script
 	$Timeout = New-Timespan -Minutes $HubScanTimeout
@@ -42,7 +42,7 @@ function GetScanStatus($jsonData, $HubSession, $HubScanTimeout)
 	while ($SW.Elapsed -lt $Timeout){
 		
 		try {
-			$ScanSummaryResponse = Invoke-RestMethod -Uri $jsonData._meta.href -Method Get -WebSession $HubSession
+			$ScanSummaryResponse = Invoke-RestMethod -Uri $JsonData._meta.href -Method Get -WebSession $HubSession
 		}
 		catch {
 			Write-Error "ERROR:" $_.Exception.Response.StatusDescription
@@ -110,13 +110,15 @@ $HubScannerParentLocation = Join-Path $env:AGENT_HOMEDIRECTORY $ScanParent
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation $ScanChild
 $HubScannerLogsLocation = Join-path $env:AGENT_HOMEDIRECTORY $LogFolder
 
+$HubBaseUrl = ("{0}://{1}:{2}/" -f $HubScheme, $HubHost, $HubPort)
+
 #Determine if Hub scan client exists in the Agent home directory. If not, download it from the Hub instance.
 if(!(Test-Path($HubScannerChildLocation)))
 {
 	Write-Host "INFO: Hub scan client not found, create folder at:" $HubScannerParentLocation
 	New-Item -ItemType directory -Path $HubScannerParentLocation | Out-Null
 	$WC = New-Object System.Net.WebClient
-	$CliUrl = ("{0}://{1}:{2}/{3}" -f $HubScheme, $HubHost, $HubPort, $HostedCli)
+	$CliUrl = ("{0}{1}" -f $HubBaseUrl, $HostedCli)
 	$Filename = [System.IO.Path]::GetFileName($CliUrl)
 	$Output = Join-Path $HubScannerParentLocation $Filename
 	Write-Host "INFO: Downloading Hub scan client from:" $CliUrl
@@ -207,24 +209,24 @@ $DataOutputFile = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -
 if ($HubFailOnPolicyViolation -eq "true") {
 	Write-Host "INFO: Checking for Hub Policy Violations"
 	
-	#Login / Establish Session
-	$HubLoginUrl = ("{0}://{1}:{2}/j_spring_security_check?j_username={3}&j_password={4}" -f $HubScheme, $HubHost, $HubPort, $HubUsername, $HubPassword)
-	$jsonData = Get-Content -Raw -Path $DataOutputFile | ConvertFrom-Json
+	#Establish Session
 	try {
-		Invoke-RestMethod -Uri $HubLoginUrl -Method Post -SessionVariable HubSession -ErrorAction:Stop
+		Invoke-RestMethod -Uri ("{0}j_spring_security_check" -f $HubBaseUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 	}
 	catch {
 		Write-Error "ERROR: " $_.Exception.Response.StatusDescription
 		Exit
 	}
 	
+	$JsonData = Get-Content -Raw -Path $DataOutputFile | ConvertFrom-Json
+	
 	#Get Scan Summary
 	#Check for scan status and time out after a certain amount of minutes if status doesn't reach complete
-	GetScanStatus $jsonData $HubSession $HubScanTimeout
+	GetScanStatus $JsonData $HubSession $HubScanTimeout
 	
 	#Get Project/Version
 	try {
-		$ProjectVersionResponse = Invoke-RestMethod -Uri $jsonData._meta.links[0].href -Method Get -WebSession $HubSession
+		$ProjectVersionResponse = Invoke-RestMethod -Uri $JsonData._meta.links[0].href -Method Get -WebSession $HubSession
 	}
 	catch {
 		Write-Error "ERROR:" $_.Exception.Response.StatusDescription
