@@ -1,9 +1,7 @@
 param(
 	[Parameter(Mandatory=$true)][string] $HubUsername,
 	[Parameter(Mandatory=$true)][string] $HubPassword,
-	[Parameter(Mandatory=$true)][string] $HubScheme,
-	[Parameter(Mandatory=$true)][string] $HubHost,
-	[Parameter(Mandatory=$true)][string] $HubPort,
+	[Parameter(Mandatory=$true)][string] $HubUrl,
 	[Parameter(Mandatory=$true)][string] $HubProjectName,
 	[Parameter(Mandatory=$true)][string] $HubRelease,
 	[Parameter(Mandatory=$true)][string] $HubFailOnPolicyViolation,
@@ -26,11 +24,10 @@ function UnZip($zipPath, $folderPath)
 #https://github.com/TotalALM/VSTS-Tasks/blob/master/Tasks/Unzip/task/unzip.ps1
 function RemoveZip($zip)
 { 
-
-start-Sleep -m 4000
-If (Test-Path $zip){
-	    Remove-Item $zip -Recurse -Force
-    }
+	Start-Sleep -m 4000
+	If (Test-Path $zip){
+		Remove-Item $zip -Recurse -Force
+	}
 }
 
 function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) 
@@ -39,7 +36,7 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout)
 	$Timeout = New-Timespan -Minutes $HubScanTimeout
 	$SW = [Diagnostics.Stopwatch]::StartNew()
 	
-	while ($SW.Elapsed -lt $Timeout){
+	while ($SW.Elapsed -lt $Timeout) {
 		
 		try {
 			$ScanSummaryResponse = Invoke-RestMethod -Uri $JsonData._meta.href -Method Get -WebSession $HubSession
@@ -49,51 +46,32 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout)
 			Exit
 		}
 		
-		switch ($ScanSummaryResponse.status)
-		{
-			UNSTARTED { 
-				Start-Sleep -Seconds 3
-				Continue 
-			} 
-			SCANNING { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			SAVING_SCAN_DATA { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			SCAN_DATA_SAVE_COMPLETE { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			REQUESTED_MATCH_JOB { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			MATCHING { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			BOM_VERSION_CHECK { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			BUILDING_BOM { 
-				Start-Sleep -Seconds 3
-				Continue 
-			}
-			COMPLETE { 
-				Return
-			}
-			default { 
-				Write-Error "ERROR:" $ScanSummaryResponse.status
-				Exit
-			}
+		if ($ScanSummaryResponse.status -eq "COMPLETE") {
+			Return
+		}
+		Else {
+			Start-Sleep -Seconds 3
+			Continue
 		}
 	}
 	Write-Error "ERROR: Hub Scan has timed out per configuration:" $HubScanTimeout " minutes"
 	Exit
+}
+
+function CheckHubUrl($HubUrl)
+{
+	$HTTP_Request = [System.Net.WebRequest]::Create($HubUrl)
+	$HTTP_Response = $HTTP_Request.GetResponse()
+	
+	If ([int]$HTTP_Response.StatusCode -eq 200) { 
+		Write-Host "INFO: Communication with the Hub succeeded." 
+		$HTTP_Response.Close()
+	}
+	Else {
+		Write-Host "ERROR: Communication with the Hub failed. The server may be down, or the Server URL parameter is incorrect."
+		$HTTP_Response.Close()
+		Exit
+	}
 }
 #####################################################
 
@@ -110,7 +88,12 @@ $HubScannerParentLocation = Join-Path $env:AGENT_HOMEDIRECTORY $ScanParent
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation $ScanChild
 $HubScannerLogsLocation = Join-path $env:AGENT_HOMEDIRECTORY $LogFolder
 
-$HubBaseUrl = ("{0}://{1}:{2}/" -f $HubScheme, $HubHost, $HubPort)
+#Remove trailing "/" from HubUrl if it exists
+if (($HubUrl.Substring($HubUrl.Length-1) -eq "/")) { $HubUrl = $HubUrl.Substring(0, $HubUrl.Length-1) }
+
+#Ensure HubURL is correct, and connectivity can be established. 
+#No point in continuing if we can't connect to the Hub.
+CheckHubUrl $HubUrl
 
 #Determine if Hub scan client exists in the Agent home directory. If not, download it from the Hub instance.
 if(!(Test-Path($HubScannerChildLocation)))
@@ -118,7 +101,7 @@ if(!(Test-Path($HubScannerChildLocation)))
 	Write-Host "INFO: Hub scan client not found, create folder at:" $HubScannerParentLocation
 	New-Item -ItemType directory -Path $HubScannerParentLocation | Out-Null
 	$WC = New-Object System.Net.WebClient
-	$CliUrl = ("{0}{1}" -f $HubBaseUrl, $HostedCli)
+	$CliUrl = ("{0}/{1}" -f $HubUrl, $HostedCli)
 	$Filename = [System.IO.Path]::GetFileName($CliUrl)
 	$Output = Join-Path $HubScannerParentLocation $Filename
 	Write-Host "INFO: Downloading Hub scan client from:" $CliUrl
@@ -154,16 +137,14 @@ Write-Host "INFO: Hub scan client found at: " $HubScannerChildLocation
 Write-Host "INFO: Starting Black Duck Hub scan with the following parameters:"
 Write-Host "INFO: Username:" $HubUsername
 Write-Host "INFO: Password: <NOT SHOWN>" 
-Write-Host "INFO: Scheme:" $HubScheme
-Write-Host "INFO: Host:" $HubHost
-Write-Host "INFO: Port:" $HubPort
+Write-Host "INFO: Server URL:" $HubUrl
 Write-Host "INFO: Project Location:" $env:BUILD_SOURCESDIRECTORY
 Write-Host "INFO: Project Name:" $HubProjectName
 Write-Host "INFO: Project Version:" $HubRelease
 
 Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
 -ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}"' -f `
-$HubUsername, $HubPassword, $HubScheme, $HubHost, $HubPort, $env:BUILD_SOURCESDIRECTORY, $HubProjectName, $HubRelease, $BuildLogFolder) `
+$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $env:BUILD_SOURCESDIRECTORY, $HubProjectName, $HubRelease, $BuildLogFolder) `
 -NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput) 
 
 #Get Hub scan status, and based on it, continue or exit
@@ -211,7 +192,7 @@ if ($HubFailOnPolicyViolation -eq "true") {
 	
 	#Establish Session
 	try {
-		Invoke-RestMethod -Uri ("{0}j_spring_security_check" -f $HubBaseUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
+		Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 	}
 	catch {
 		Write-Error "ERROR: " $_.Exception.Response.StatusDescription

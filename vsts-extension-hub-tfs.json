@@ -13,11 +13,12 @@
     "Black Duck",
     "Continuous Integration",
     "Security",
-    "Open Source"
+    "Open Source",
+    "Hub"
   ],
   "description": "Execute a Black Duck Hub scan against your build",
   "categories": [
-    "Build and release"
+    "Integrate"
   ],
   "icons": {
     "default": "images/bds_default.png"

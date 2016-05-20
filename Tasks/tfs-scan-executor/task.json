@@ -35,29 +35,12 @@
       "helpMarkDown": "The password to access your Black Duck Hub instance."
     },
     {
-      "name": "HubScheme",
-      "type": "pickList",
-      "label": "Scheme",
-      "required": false,
-      "defaultValue": "http",
-      "options": {
-        "http": "http",
-        "https": "https"
-      }
-    },
-    {
-      "name": "HubHost",
+      "name": "HubUrl",
       "type": "string",
-      "label": "Host",
+      "label": "Server URL",
       "defaultValue": "",
-      "required": true
-    },
-    {
-      "name": "HubPort",
-      "type": "string",
-      "label": "Port",
-      "defaultValue": "",
-      "required": true
+      "required": true,
+      "helpMarkDown": "Provide the URL for your Black Duck Hub Server - please include the port if other than 80 (http) or 443 (https)"
     },
     {
       "name": "HubProjectName",
