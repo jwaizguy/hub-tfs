@@ -42,7 +42,7 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout)
 			$ScanSummaryResponse = Invoke-RestMethod -Uri $JsonData._meta.href -Method Get -WebSession $HubSession
 		}
 		catch {
-			Write-Error "ERROR:" $_.Exception.Response.StatusDescription
+			Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
 			Exit
 		}
 		
@@ -54,7 +54,7 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout)
 			Continue
 		}
 	}
-	Write-Error "ERROR: Hub Scan has timed out per configuration:" $HubScanTimeout " minutes"
+	Write-Error ("ERROR: Hub Scan has timed out per configuration: {0} minutes" -f $HubScanTimeout)
 	Exit
 }
 
@@ -98,13 +98,13 @@ CheckHubUrl $HubUrl
 #Determine if Hub scan client exists in the Agent home directory. If not, download it from the Hub instance.
 if(!(Test-Path($HubScannerChildLocation)))
 {
-	Write-Host "INFO: Hub scan client not found, create folder at:" $HubScannerParentLocation
+	Write-Host ("INFO: Hub scan client not found, create folder at: {0}" -f $HubScannerParentLocation)
 	New-Item -ItemType directory -Path $HubScannerParentLocation | Out-Null
 	$WC = New-Object System.Net.WebClient
 	$CliUrl = ("{0}/{1}" -f $HubUrl, $HostedCli)
 	$Filename = [System.IO.Path]::GetFileName($CliUrl)
 	$Output = Join-Path $HubScannerParentLocation $Filename
-	Write-Host "INFO: Downloading Hub scan client from:" $CliUrl
+	Write-Host ("INFO: Downloading Hub scan client from: {0}" -f $CliUrl)
 	$WC.DownloadFile($CliUrl, $Output)
 	
 	if (Test-Path($Output)) { 
@@ -119,28 +119,28 @@ if(!(Test-Path($HubScannerChildLocation)))
 
 if (!(Test-Path($HubScannerLogsLocation)))
 {
-	Write-Host "INFO: Create Hub logs folder at:" $HubScannerLogsLocation
+	Write-Host ("INFO: Create Hub logs folder at: {0}" -f $HubScannerLogsLocation)
 	New-Item -ItemType directory -Path $HubScannerLogsLocation | Out-Null
 }
 
 $BuildLogFolder =[System.IO.Path]::Combine($HubScannerLogsLocation, $env:BUILD_DEFINITIONNAME, $env:BUILD_BUILDNUMBER)
 if (!(Test-Path($BuildLogFolder)))
 {
-	Write-Host "INFO: Create build specific Hub logs folder at:" $BuildLogFolder
+	Write-Host ("INFO: Create build specific Hub logs folder at: {0}" -f $BuildLogFolder)
 	New-Item -ItemType directory -Path $BuildLogFolder | Out-Null
 }
 
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation  (Get-ChildItem $HubScannerParentLocation -name)
-Write-Host "INFO: Hub scan client found at: " $HubScannerChildLocation
+Write-Host ("INFO: Hub scan client found at: {0}" -f $HubScannerChildLocation)
 
 #Execute Hub scan and write logs (for some reason it comes through the error stream)
-Write-Host "INFO: Starting Black Duck Hub scan with the following parameters:"
-Write-Host "INFO: Username:" $HubUsername
+Write-Host "INFO: Starting Black Duck Hub scan with the following parameters"
+Write-Host ("INFO: Username: {0}" -f $HubUsername)
 Write-Host "INFO: Password: <NOT SHOWN>" 
-Write-Host "INFO: Server URL:" $HubUrl
-Write-Host "INFO: Project Location:" $env:BUILD_SOURCESDIRECTORY
-Write-Host "INFO: Project Name:" $HubProjectName
-Write-Host "INFO: Project Version:" $HubRelease
+Write-Host ("INFO: Server URL: {0}" -f $HubUrl)
+Write-Host ("INFO: Project Location: {0}" -f $env:BUILD_SOURCESDIRECTORY)
+Write-Host ("INFO: Project Name: {0}" -f $HubProjectName)
+Write-Host ("INFO: Project Version: {0}" -f $HubRelease)
 
 Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
 -ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}"' -f `
@@ -195,7 +195,7 @@ if ($HubFailOnPolicyViolation -eq "true") {
 		Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 	}
 	catch {
-		Write-Error "ERROR: " $_.Exception.Response.StatusDescription
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
 		Exit
 	}
 	
@@ -210,7 +210,7 @@ if ($HubFailOnPolicyViolation -eq "true") {
 		$ProjectVersionResponse = Invoke-RestMethod -Uri $JsonData._meta.links[0].href -Method Get -WebSession $HubSession
 	}
 	catch {
-		Write-Error "ERROR:" $_.Exception.Response.StatusDescription
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
 		Exit
 	}
 	#Get Policy Status
@@ -218,7 +218,7 @@ if ($HubFailOnPolicyViolation -eq "true") {
 		$PolicyResponse = Invoke-RestMethod -Uri ("{0}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion) -Method Get -WebSession $HubSession
 	}
 	catch {
-		Write-Error "ERROR:" $_.Exception.Response.StatusDescription
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
 		Exit
 	}
 	
@@ -246,5 +246,5 @@ if ($HubFailOnPolicyViolation -eq "true") {
 }
 
 Write-Host "INFO: Black Duck Hub Scan task completed"
-Write-Host "INFO: Logs can be found at:" $BuildLogFolder
+Write-Host ("INFO: Logs can be found at: {0}" -f $BuildLogFolder)
 
