@@ -1,6 +1,7 @@
 ﻿{
   "manifestVersion": 1.0,
   "id": "hub-tfs",
+  "version": "0.2.0",
   "name": "Black Duck Hub Scan",
   "publisher": "black-duck-software",
   "targets": [
