@@ -143,7 +143,7 @@ Write-Host ("INFO: Project Name: {0}" -f $HubProjectName)
 Write-Host ("INFO: Project Version: {0}" -f $HubRelease)
 
 Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
--ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}"' -f `
+-ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -exclude /$tf/' -f `
 $HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $env:BUILD_SOURCESDIRECTORY, $HubProjectName, $HubRelease, $BuildLogFolder) `
 -NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput) 
 
@@ -247,4 +247,3 @@ if ($HubFailOnPolicyViolation -eq "true") {
 
 Write-Host "INFO: Black Duck Hub Scan task completed"
 Write-Host ("INFO: Logs can be found at: {0}" -f $BuildLogFolder)
-
