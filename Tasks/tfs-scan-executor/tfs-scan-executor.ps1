@@ -95,6 +95,19 @@ if (($HubUrl.Substring($HubUrl.Length-1) -eq "/")) { $HubUrl = $HubUrl.Substring
 #No point in continuing if we can't connect to the Hub.
 CheckHubUrl $HubUrl
 
+#Establish Session
+try {
+	Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
+}
+catch {
+	Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+	Exit
+}
+
+#Get Hub instance version number
+$HubVersion = Invoke-RestMethod -Uri ("{0}/api/v1/current-version" -f $HubUrl) -Method Get -WebSession $HubSession
+Write-Host ("INFO: Black Duck Hub {0}" -f $HubVersion)
+
 #Determine if Hub scan client exists in the Agent home directory. If not, download it from the Hub instance.
 if(!(Test-Path($HubScannerChildLocation)))
 {
@@ -116,6 +129,31 @@ if(!(Test-Path($HubScannerChildLocation)))
 		Exit
 	}
 }
+else {
+	
+	$HubScanner = Get-ChildItem $HubScannerParentLocation | Where-Object {$_.PSIsContainer -eq $true -and $_.Name -match ("scan.cli-{0}" -f $HubVersion)}
+
+	if (($HubScanner).Count -eq 0) {
+
+		Write-Host "INFO: Newer Hub version detected, downloading updated scan client"
+
+		$WC = New-Object System.Net.WebClient
+		$CliUrl = ("{0}/{1}" -f $HubUrl, $HostedCli)
+		$Filename = [System.IO.Path]::GetFileName($CliUrl)
+		$Output = Join-Path $HubScannerParentLocation $Filename
+		Write-Host ("INFO: Downloading Hub scan client from: {0}" -f $CliUrl)
+		$WC.DownloadFile($CliUrl, $Output)
+
+		if (Test-Path($Output)) { 
+			Write-Host "INFO: Extracting Hub scan client"
+			UnZip $Output $HubScannerParentLocation
+		}
+		else {
+			Write-Error "ERROR: Error downloading Hub scan client"
+			Exit
+		}
+	}
+}
 
 if (!(Test-Path($HubScannerLogsLocation)))
 {
@@ -130,7 +168,7 @@ if (!(Test-Path($BuildLogFolder)))
 	New-Item -ItemType directory -Path $BuildLogFolder | Out-Null
 }
 
-$HubScannerChildLocation = Join-Path $HubScannerParentLocation  (Get-ChildItem $HubScannerParentLocation -name)
+$HubScannerChildLocation = Join-Path $HubScannerParentLocation ("scan.cli-{0}" -f $HubVersion)
 Write-Host ("INFO: Hub scan client found at: {0}" -f $HubScannerChildLocation)
 
 #Execute Hub scan and write logs (for some reason it comes through the error stream)
@@ -190,7 +228,7 @@ $DataOutputFile = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -
 if ($HubFailOnPolicyViolation -eq "true") {
 	Write-Host "INFO: Checking for Hub Policy Violations"
 	
-	#Establish Session
+	#Re-establish Session
 	try {
 		Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 	}
