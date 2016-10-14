@@ -4,6 +4,7 @@ param(
 	[Parameter(Mandatory=$true)][string] $HubUrl,
 	[Parameter(Mandatory=$true)][string] $HubProjectName,
 	[Parameter(Mandatory=$true)][string] $HubRelease,
+	[Parameter(Mandatory=$true)][AllowEmptyString()][string] $HubScanTarget,
 	[Parameter(Mandatory=$true)][string] $HubFailOnPolicyViolation,
 	[Parameter(Mandatory=$true)][string] $HubScanTimeout
 )
@@ -171,18 +172,26 @@ if (!(Test-Path($BuildLogFolder)))
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation ("scan.cli-{0}" -f $HubVersion)
 Write-Host ("INFO: Hub scan client found at: {0}" -f $HubScannerChildLocation)
 
+#Get scan target
+if ($HubScanTarget) {
+	$ScanTarget = $HubScanTarget
+} 
+else { 
+	$ScanTarget = $env:BUILD_SOURCESDIRECTORY
+}
+
 #Execute Hub scan and write logs (for some reason it comes through the error stream)
 Write-Host "INFO: Starting Black Duck Hub scan with the following parameters"
 Write-Host ("INFO: Username: {0}" -f $HubUsername)
 Write-Host "INFO: Password: <NOT SHOWN>" 
 Write-Host ("INFO: Server URL: {0}" -f $HubUrl)
-Write-Host ("INFO: Project Location: {0}" -f $env:BUILD_SOURCESDIRECTORY)
+Write-Host ("INFO: Project Location: {0}" -f $ScanTarget)
 Write-Host ("INFO: Project Name: {0}" -f $HubProjectName)
 Write-Host ("INFO: Project Version: {0}" -f $HubRelease)
 
 Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
 -ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -exclude /$tf/' -f `
-$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $env:BUILD_SOURCESDIRECTORY, $HubProjectName, $HubRelease, $BuildLogFolder) `
+$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $ScanTarget, $HubProjectName, $HubRelease, $BuildLogFolder) `
 -NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput) 
 
 #Get Hub scan status, and based on it, continue or exit

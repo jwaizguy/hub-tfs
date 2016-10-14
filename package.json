@@ -1,6 +1,6 @@
 {
     "name": "vsts-extension-hub-tfs",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "Execute a Black Duck Hub scan against your build",
     "author": "Black Duck Software, Inc.",
     "license": "Apache-2.0",
