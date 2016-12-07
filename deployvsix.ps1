@@ -16,7 +16,11 @@ $AF_Password = ConvertTo-SecureString $Password -AsPlainText -Force
 $Creds = New-Object System.Management.Automation.PSCredential ($Username, $AF_Password)
 
 # Copy to Artifactory
-Write-Host ("Deploying {0} to {1}" -f $Vsix.Name, $Uri)
-Invoke-WebRequest -Uri $Uri -InFile $Vsix.Name -Method Put -Credential $Creds
-
-Exit $LASTEXITCODE
+Try {
+	Write-Host ("Deploying {0} to {1}" -f $Vsix.Name, $Uri)
+	Invoke-WebRequest -Uri $Uri -InFile $Vsix.Name -Method Put -Credential $Creds
+}
+Catch {
+	Write-Error $_.Exception.Message
+	Exit 1
+}
