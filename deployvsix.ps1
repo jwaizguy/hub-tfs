@@ -3,7 +3,7 @@ param(
 	[string] $Password
 )
 
-$BaseUri = "https://updates.suite.blackducksoftware.com/repo/com/blackducksoftware/integration"
+$BaseUri = "https://updates.suite.blackducksoftware.com/integrations/com/blackducksoftware/integration"
 
 # Get .vsix from current directory
 $Vsix = Get-ChildItem *.vsix
@@ -18,7 +18,7 @@ $Creds = New-Object System.Management.Automation.PSCredential ($Username, $AF_Pa
 # Copy to Artifactory
 Try {
 	Write-Host ("Deploying {0} to {1}" -f $Vsix.Name, $Uri)
-	Invoke-WebRequest -Uri $Uri -InFile $Vsix.Name -Method Put -Credential $Creds
+	Invoke-WebRequest -Uri $Uri -InFile $Vsix -Method Put -Credential $Creds
 }
 Catch {
 	Write-Error $_.Exception.Message
