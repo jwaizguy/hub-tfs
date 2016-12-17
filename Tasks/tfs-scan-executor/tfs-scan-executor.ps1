@@ -69,7 +69,7 @@ function CheckHubUrl($HubUrl)
 		$HTTP_Response.Close()
 	}
 	Else {
-		Write-Host "ERROR: Communication with the Hub failed. The server may be down, or the Server URL parameter is incorrect."
+		Write-Error "ERROR: Communication with the Hub failed. The server may be down, or the Server URL parameter is incorrect."
 		$HTTP_Response.Close()
 		Exit
 	}
@@ -101,7 +101,7 @@ try {
 	Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 }
 catch {
-	Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+	Write-Error ("ERROR: Could not establish session - Unauthorized")
 	Exit
 }
 
@@ -195,41 +195,10 @@ $HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).
 -NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput) 
 
 #Get Hub scan status, and based on it, continue or exit
-$status = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern " with status ") -split " ")[-1]
+$status = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern "ERROR: ") -split ": ")[-1]
 
-switch ($status)
-{
-	SUCCESS { 
-		Write-Host "INFO: Hub scan completed successfully" 
-	} 
-	FILE_NOT_FOUND { 
-		Write-Error "ERROR: The archive or directory does not exist." 
-		Exit
-	}
-	NO_HOST { 
-		Write-Error "ERROR: The specified host does not exist." 
-		Exit
-	}
-	NO_PERMISSION { 
-		Write-Error "ERROR: You do not have sufficient permissions to perform the operation." 
-		Exit
-	}
-	NO_REGISTRATION { 
-		Write-Error "ERROR: The Black Duck Hub license registration has expired, the license is not registered for scanning, or you have exceeded the amount of code you are licensed to scan." 
-		Exit
-	}
-	NO_USER { 
-		Write-Error "ERROR: The specified user does not exist." 
-		Exit
-	}
-	SOFTWARE { 
-		Write-Error "ERROR: An internal software error has been detected." 
-		Exit
-	}
-	default { 
-		Write-Error "ERROR: Unknown error."
-		Exit
-	}
+if ($status) {
+	Write-Error "ERROR: " $status
 }
 
 $DataOutputFile = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern " Creating data output file: ") -split ": ")[-1]
