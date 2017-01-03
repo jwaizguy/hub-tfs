@@ -1,8 +1,8 @@
 ﻿{
   "manifestVersion": 1.0,
   "id": "hub-tfs",
-  "version": "0.5.0",
-  "name": "Black Duck Hub Scan",
+  "version": "1.0.0",
+  "name": "Black Duck Hub",
   "publisher": "black-duck-software",
   "targets": [
     {
@@ -30,11 +30,15 @@
   "files": [
     {
       "path": "Tasks/tfs-scan-executor"
+    },
+    {
+      "path": "images",
+      "addressable": true
     }
   ],
   "content": {
     "details": {
-      "path": "README.md"
+      "path": "overview.md"
     }
   },
   "links": {

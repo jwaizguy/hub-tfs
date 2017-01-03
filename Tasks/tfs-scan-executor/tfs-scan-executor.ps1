@@ -192,7 +192,7 @@ Write-Host ("INFO: Project Version: {0}" -f $HubRelease)
 Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
 -ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -exclude /$tf/' -f `
 $HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $ScanTarget, $HubProjectName, $HubRelease, $BuildLogFolder) `
--NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput) 
+-NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput)
 
 #Get Hub scan status, and based on it, continue or exit
 $status = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern "ERROR: ") -split ": ")[-1]
