@@ -56,6 +56,48 @@
       "properties": {
         "name": "Tasks/tfs-scan-executor"
       }
+    },
+    {
+      "id": "hub-endpoint",
+      "description": "Service Endpoint for Black Duck Hub connections",
+      "type": "ms.vss-endpoint.service-endpoint-type",
+      "targets": [ "ms.vss-endpoint.endpoint-types" ],
+      "properties": {
+        "name": "blackduck",
+        "displayName": "Black Duck Hub",
+        "url": {
+          "displayName": "Server URL",
+          "helpText": "Provide the URL for your Black Duck Hub Server - please include the port if other than 80 (http) or 443 (https)"
+        },
+        "authenticationSchemes": [
+          {
+            "type": "ms.vss-endpoint.endpoint-auth-scheme-basic",
+            "inputDescriptors": [
+              {
+                "id": "username",
+                "name": "Username",
+                "description": "The username to access your Black Duck Hub instance",
+                "inputMode": "textbox",
+                "validation": {
+                  "isRequired": true,
+                  "dataType": "string"
+                }
+              },
+              {
+                "id": "password",
+                "name": "Password",
+                "description": "The password to access your Black Duck Hub instance",
+                "inputMode": "passwordbox",
+                "isConfidential": true,
+                "validation": {
+                  "isRequired": true,
+                  "dataType": "string"
+                }
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

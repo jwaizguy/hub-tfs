@@ -19,28 +19,12 @@
   "instanceNameFormat": "Execute a Black Duck Hub scan against your build $(message)",
   "inputs": [
     {
-      "name": "HubUsername",
-      "type": "string",
-      "label": "Username",
+      "name": "BlackDuckHubService",
+      "type": "connectedService:BlackDuck",
+      "label": "Black Duck Hub Service Endpoint",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "The username to access your Black Duck Hub instance."
-    },
-    {
-      "name": "HubPassword",
-      "type": "string",
-      "label": "Password",
-      "defaultValue": "",
-      "required": true,
-      "helpMarkDown": "The password to access your Black Duck Hub instance."
-    },
-    {
-      "name": "HubUrl",
-      "type": "string",
-      "label": "Server URL",
-      "defaultValue": "",
-      "required": true,
-      "helpMarkDown": "Provide the URL for your Black Duck Hub Server - please include the port if other than 80 (http) or 443 (https)"
+      "helpMarkDown": "Select the Black Duck end point to use. If needed, click on 'manage', and add a new Service Endpoint of type 'Black Duck Hub'"
     },
     {
       "name": "HubProjectName",
@@ -80,7 +64,7 @@
     }
   ],
   "execution": {
-    "PowerShell": {
+    "PowerShell3": {
       "target": "$(currentDirectory)\\tfs-scan-executor.ps1",
       "argumentFormat": "",
       "workingDirectory": "$(currentDirectory)"

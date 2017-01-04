@@ -1,13 +1,4 @@
-param(
-	[Parameter(Mandatory=$true)][string] $HubUsername,
-	[Parameter(Mandatory=$true)][string] $HubPassword,
-	[Parameter(Mandatory=$true)][string] $HubUrl,
-	[Parameter(Mandatory=$true)][string] $HubProjectName,
-	[Parameter(Mandatory=$true)][string] $HubRelease,
-	[Parameter(Mandatory=$true)][AllowEmptyString()][string] $HubScanTarget,
-	[Parameter(Mandatory=$true)][string] $HubFailOnPolicyViolation,
-	[Parameter(Mandatory=$true)][string] $HubScanTimeout
-)
+param()
 
 ######################FUNCTIONS######################
 #https://github.com/TotalALM/VSTS-Tasks/blob/master/Tasks/Unzip/task/unzip.ps1
@@ -75,7 +66,21 @@ function CheckHubUrl($HubUrl)
 	}
 }
 #####################################################
+#Get Hub Url
+$Service = (Get-VstsInput -Name BlackDuckHubService -Require)
+$ServiceEndpoint = Get-VstsEndpoint -Name $Service
+$HubUrl = $ServiceEndpoint.Url
 
+#Get Hub Creds
+$HubUsername = $ServiceEndpoint.auth.parameters.username
+$HubPassword = $ServiceEndpoint.auth.parameters.password
+
+$HubProjectName = Get-VstsInput -Name HubProjectName -Require
+$HubRelease = Get-VstsInput -Name HubRelease -Require
+$HubScanTarget = Get-VstsInput -Name HubScanTarget
+$HubFailOnPolicyViolation = Get-VstsInput -Name HubFailOnPolicyViolation -Require
+$HubScanTimeout = Get-VstsInput -Name HubScanTimeout -Require
+	
 #Constants
 $HostedCli = "download/scan.cli-windows.zip"
 $ScanParent = "bds_hub_scanner"
@@ -182,8 +187,6 @@ else {
 
 #Execute Hub scan and write logs (for some reason it comes through the error stream)
 Write-Host "INFO: Starting Black Duck Hub scan with the following parameters"
-Write-Host ("INFO: Username: {0}" -f $HubUsername)
-Write-Host "INFO: Password: <NOT SHOWN>" 
 Write-Host ("INFO: Server URL: {0}" -f $HubUrl)
 Write-Host ("INFO: Project Location: {0}" -f $ScanTarget)
 Write-Host ("INFO: Project Name: {0}" -f $HubProjectName)
