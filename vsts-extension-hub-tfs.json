@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "name": "Black Duck Hub",
   "publisher": "black-duck-software",
+  "public": true,
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
