@@ -3,7 +3,10 @@
 Hub plugin for Team Foundation Server. This TFS extension that will create a task, allowing you to identify known open source risk (security, license, and operational) during your build process, with an added feature to fail the build if any Black Duck Hub Policy Violations are met.
 
 ## Where can I get the latest release?
-You can download the latest source from GitHub: https://github.com/blackducksoftware/hub-tfs/releases 
+
+Directly from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=black-duck-software.hub-tfs)
+
+All versions are available at: https://github.com/blackducksoftware/hub-tfs/releases 
 
 ## Documentation
 
