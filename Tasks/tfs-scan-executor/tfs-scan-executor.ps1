@@ -78,6 +78,7 @@ $HubPassword = $ServiceEndpoint.auth.parameters.password
 $HubProjectName = Get-VstsInput -Name HubProjectName -Require
 $HubRelease = Get-VstsInput -Name HubRelease -Require
 $HubScanTarget = Get-VstsInput -Name HubScanTarget
+$HubCodeLocationName = Get-VstsInput -Name HubCodeLocationName
 $HubFailOnPolicyViolation = Get-VstsInput -Name HubFailOnPolicyViolation -Require
 $HubScanTimeout = Get-VstsInput -Name HubScanTimeout -Require
 	
@@ -192,10 +193,23 @@ Write-Host ("INFO: Project Location: {0}" -f $ScanTarget)
 Write-Host ("INFO: Project Name: {0}" -f $HubProjectName)
 Write-Host ("INFO: Project Version: {0}" -f $HubRelease)
 
-Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
--ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -exclude /$tf/' -f `
-$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $ScanTarget, $HubProjectName, $HubRelease, $BuildLogFolder) `
--NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput)
+#If a Code Location Name is specified, ensure the Hub is version 3.5.0 or later
+if ([version]$HubVersion -ge [version]"3.5.0" -and $HubCodeLocationName) {
+	Write-Host ("INFO: Code Location Name: {0}" -f $HubCodeLocationName)
+	Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
+	-ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -name "{9}" -exclude /$tf/' -f `
+	$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $ScanTarget, $HubProjectName, $HubRelease, $BuildLogFolder, $HubCodeLocationName) `
+	-NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput)
+}
+else {
+	if ([version]$HubVersion -lt [version]"3.5.0" -and $HubCodeLocationName) {
+		Write-Host ("INFO: Code Location Name requires Hub 3.5.0+")
+	}
+	Start-Process -FilePath ("{0}\bin\{1}" -f $HubScannerChildLocation, $HubScanScript) `
+	-ArgumentList ('-username {0} -password {1} -scheme {2} -host {3} -port {4} "{5}" -project "{6}" -release "{7}" -verbose -statusWriteDir "{8}" -exclude /$tf/' -f `
+	$HubUsername, $HubPassword, ([System.Uri]$HubUrl).Scheme, ([System.Uri]$HubUrl).Host, ([System.Uri]$HubUrl).Port, $ScanTarget, $HubProjectName, $HubRelease, $BuildLogFolder) `
+	-NoNewWindow -Wait -RedirectStandardError (Join-Path $BuildLogFolder $LogOutput)
+}
 
 #Get Hub scan status, and based on it, continue or exit
 $status = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern "ERROR: ") -split ": ")[-1]
