@@ -4,7 +4,7 @@ Hub plugin for Team Foundation Server. This TFS extension that will create a tas
 
 ## Where can I get the latest release?
 
-Directly from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=black-duck-software.hub-tfs)
+Directly from the [VSTS Marketplace](https://marketplace.visualstudio.com/items?itemName=black-duck-software.hub-tfs)
 
 All versions are available at: https://github.com/blackducksoftware/hub-tfs/releases 
 
