@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="../lib/VSS.SDK.min.js"></script>
+
+    <script type="text/javascript">
+        VSS.init({
+            usePlatformScripts: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "riskreport": "scripts"
+                }
+            }
+        });
+
+        VSS.ready(function () {
+            require(["riskreport/status"], function () { });
+        });
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/riskreport.css">
+
+</head>
+
+<body>
+    <div class="black-duck-risk-report">
+
+    </div>
+</body>
+
+</html>

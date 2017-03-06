@@ -79,7 +79,9 @@ $HubProjectName = Get-VstsInput -Name HubProjectName -Require
 $HubRelease = Get-VstsInput -Name HubRelease -Require
 $HubScanTarget = Get-VstsInput -Name HubScanTarget
 $HubCodeLocationName = Get-VstsInput -Name HubCodeLocationName
-$HubFailOnPolicyViolation = Get-VstsInput -Name HubFailOnPolicyViolation -Require
+$HubSetBuildStateOnPolicyViolation = Get-VstsInput -Name HubSetBuildStateOnPolicyViolation -Require
+$HubBuildState = Get-VstsInput -Name HubBuildState
+$HubGenerateRiskReport = Get-VstsInput -Name HubGenerateRiskReport -Require
 $HubScanTimeout = Get-VstsInput -Name HubScanTimeout -Require
 	
 #Constants
@@ -89,6 +91,8 @@ $ScanChild = "scan.cli*"
 $LogFolder = "bds_hub_logs"
 $LogOutput = "CLI_Output.txt"
 $HubScanScript = "scan.cli.bat"
+$RiskReportFilename = "riskreport.json"
+$PolicyState = ""
 
 #Folder Locations
 $HubScannerParentLocation = Join-Path $env:AGENT_HOMEDIRECTORY $ScanParent
@@ -220,7 +224,7 @@ if ($status) {
 
 $DataOutputFile = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern " Creating data output file: ") -split ": ")[-1]
 
-if ($HubFailOnPolicyViolation -eq "true") {
+if ($HubSetBuildStateOnPolicyViolation -eq "true") {
 	Write-Host "INFO: Checking for Hub Policy Violations"
 	
 	#Re-establish Session
@@ -259,15 +263,15 @@ if ($HubFailOnPolicyViolation -eq "true") {
 	switch ($PolicyStatus)
 	{
 		IN_VIOLATION { 
-			Write-Error "ERROR: This release violates a Black Duck Hub policy." 
-			Exit
+			$PolicyState = "IN_VIOLATION"
+			Break
 		} 
 		NOT_IN_VIOLATION { 
-			Write-Host "INFO: This release has passed all Black Duck Hub policy rules." 
+			$PolicyState = "NOT_IN_VIOLATION"
 			Break
 		}
 		IN_VIOLATION_OVERRIDDEN { 
-			Write-Host "ERROR: This release has policy violations, but they have been overridden." 
+			$PolicyState = "IN_VIOLATION_OVERRIDDEN"
 			Break
 		}
 		default { 
@@ -276,6 +280,193 @@ if ($HubFailOnPolicyViolation -eq "true") {
 		}
 	}
 	
+}
+
+if ($HubGenerateRiskReport -eq "true") {
+	Write-Host "INFO: Generating Black Duck Risk Report"
+	
+	#Re-establish Session
+	try {
+		Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
+	}
+	catch {
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+		Exit
+	}
+
+	$JsonData = Get-Content -Raw -Path $DataOutputFile | ConvertFrom-Json
+	
+	#Get Scan Summary
+	#Check for scan status and time out after a certain amount of minutes if status doesn't reach complete
+	GetScanStatus $JsonData $HubSession $HubScanTimeout
+	
+	#Get Project/Version
+	try {
+		$ProjectVersionResponse = Invoke-RestMethod -Uri $JsonData._meta.links[0].href -Method Get -WebSession $HubSession
+	}
+	catch {
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+		Exit
+	}
+
+	#Get Aggregate BOM
+	try {
+		$BomResponse = Invoke-RestMethod -Uri ("{0}/components?limit=10000&sortField=riskProfile.categories.VULNERABILITY&ascending=true" -f $ProjectVersionResponse.mappedProjectVersion) -Method Get -WebSession $HubSession
+	}
+	catch {
+		Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+		Exit
+	}
+
+	if ($BomResponse.totalCount -gt 0) {
+
+		$RiskReport = @()
+
+		$TotalCount = $BomResponse.totalCount
+
+		$Components = @()
+
+		foreach ($Item in $BomResponse.items) {
+
+			$ComponentName = $item.componentName
+			$ComponentVersion = $item.componentVersionName
+
+			$Licenses = @()
+
+			foreach ($License in $Item.licenses.licenses) {
+				$licenses += $license.licenseDisplay
+			}
+
+			$licenseName = $licenses -Join ", "
+
+			foreach ($Count in $Item.securityRiskProfile.counts) {
+
+				switch ($Count.countType)
+				{
+					HIGH { 
+						$HighVulnCount = $Count.count
+						Break
+					} 
+					MEDIUM { 
+						$MediumVulnCount = $Count.count
+						Break
+					}
+					LOW { 
+						$LowVulnCount = $Count.count
+						Break
+					}
+					default { 
+						Break
+					}
+				}
+			}
+			
+			$ComponentLink = ("{0}/#versions/id:{1}/view:overview" -f $HubUrl, ($Item.componentVersion -Split "/")[-1])
+
+			$Components += [PSCUSTOMOBJECT]@{
+				'component' = "$ComponentName";
+				'version' = "$ComponentVersion"
+				'license'="$LicenseName";
+				'highVulnCount'="$HighVulnCount";
+				'mediumVulnCount'="$MediumVulnCount";
+				'lowVulnCount'="$LowVulnCount";
+				'componentLink'= "$ComponentLink";
+			}
+		}
+	}
+
+	$ProjectVersion = $ProjectVersionResponse.mappedProjectVersion -Split "/"
+
+	$RiskReport = [PSCUSTOMOBJECT]@{
+		projectName = $HubProjectName
+		projectLink = ("{0}/#projects/id:{1}" -f $HubUrl, $ProjectVersion[5])
+		projectVersion = $HubRelease
+		projectVersionLink = ("{0}/#versions/id:{1}" -f $HubUrl, $ProjectVersion[7])
+		totalCount = $TotalCount
+		components = $Components
+	}
+
+	$RiskReportFile = Join-Path $BuildLogFolder $RiskReportFilename
+	$RiskReport | ConvertTo-Json -Compress | Out-File $RiskReportFile
+
+	Write-Host "##vso[task.addattachment type=blackDuckRiskReport;name=riskReport;]$RiskReportFile"
+
+}
+
+#Set build state based on policy
+if ($HubSetBuildStateOnPolicyViolation -eq "true") {
+
+	switch ($HubBuildState)
+	{
+		Succeeded { 
+			switch ($PolicyState)
+			{
+				IN_VIOLATION { 
+					Write-Host "INFO: This release violates a Black Duck Hub policy, but the build state has been set to succeed on policy violtions" 
+					Exit
+				} 
+				NOT_IN_VIOLATION { 
+					Write-Host "INFO: This release has passed all Black Duck Hub policy rules." 
+					Break
+				}
+				IN_VIOLATION_OVERRIDDEN { 
+					Write-Host "INFO: This release has policy violations, but they have been overridden." 
+					Break
+				}
+				default { 
+					Write-Error "ERROR: Unknown error."
+					Exit
+				}
+			}
+		} 
+		PartiallySucceeded { 
+			switch ($PolicyState)
+			{
+				IN_VIOLATION { 
+					Write-Warning "WARNING: This release violates a Black Duck Hub policy, but the build state has been set to partially succeed on policy violtions" 
+					Write-Host "##vso[task.complete result=SucceededWithIssues;]"
+					Break
+				} 
+				NOT_IN_VIOLATION { 
+					Write-Host "INFO: This release has passed all Black Duck Hub policy rules." 
+					Break
+				}
+				IN_VIOLATION_OVERRIDDEN { 
+					Write-Host "INFO: This release has policy violations, but they have been overridden." 
+					Break
+				}
+				default { 
+					Write-Error "ERROR: Unknown error."
+					Exit
+				}
+			}
+		}
+		Failed { 
+			switch ($PolicyState)
+			{
+				IN_VIOLATION { 
+					Write-Error "ERROR: This release violates a Black Duck Hub policy."  
+					Write-Host "##vso[task.complete result=Failed;]"
+					Break
+				} 
+				NOT_IN_VIOLATION { 
+					Write-Host "INFO: This release has passed all Black Duck Hub policy rules." 
+					Break
+				}
+				IN_VIOLATION_OVERRIDDEN { 
+					Write-Host "INFO: This release has policy violations, but they have been overridden." 
+					Break
+				}
+				default { 
+					Write-Error "ERROR: Unknown error."
+					Exit
+				}
+			}
+		}
+		default { 
+			Break
+		}
+	}
 }
 
 Write-Host "INFO: Black Duck Hub Scan task completed"
