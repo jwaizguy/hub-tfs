@@ -3,8 +3,8 @@
   "id": "hub-tfs",
   "version": "2.0.0",
   "name": "Black Duck Hub",
-  "publisher": "black-duck-software",
-  "public": true,
+  "publisher": "bds",
+  "public": false,
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"

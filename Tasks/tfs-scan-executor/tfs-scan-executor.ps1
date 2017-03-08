@@ -403,7 +403,7 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
 			{
 				IN_VIOLATION { 
 					Write-Host "INFO: This release violates a Black Duck Hub policy, but the build state has been set to succeed on policy violtions" 
-					Exit
+					Break
 				} 
 				NOT_IN_VIOLATION { 
 					Write-Host "INFO: This release has passed all Black Duck Hub policy rules." 
