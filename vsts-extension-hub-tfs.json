@@ -1,7 +1,7 @@
 ﻿{
   "manifestVersion": 1.0,
   "id": "hub-tfs",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "name": "Black Duck Hub",
   "publisher": "black-duck-software",
   "public": true,
@@ -15,7 +15,11 @@
     "Continuous Integration",
     "Security",
     "Open Source",
-    "Hub"
+    "Hub",
+    "Build"
+  ],
+  "scopes": [
+    "vso.build_execute"
   ],
   "description": "Execute a Black Duck Hub scan against your build",
   "categories": [
@@ -35,6 +39,24 @@
     {
       "path": "images",
       "addressable": true
+    },
+    {
+      "path": "static/riskreport.html",
+      "addressable": true
+    },
+    {
+      "path": "static/css/riskreport.css",
+      "addressable": true
+    },
+    {
+      "path": "dist",
+      "addressable": true,
+      "packagePath": "scripts"
+    },
+    {
+      "path": "node_modules/vss-web-extension-sdk/lib",
+      "addressable": true,
+      "packagePath": "lib"
     }
   ],
   "content": {
@@ -62,7 +84,9 @@
       "id": "hub-endpoint",
       "description": "Service Endpoint for Black Duck Hub connections",
       "type": "ms.vss-endpoint.service-endpoint-type",
-      "targets": [ "ms.vss-endpoint.endpoint-types" ],
+      "targets": [
+        "ms.vss-endpoint.endpoint-types"
+      ],
       "properties": {
         "name": "blackduck",
         "displayName": "Black Duck Hub",
@@ -98,6 +122,19 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "id": "bds-risk-report",
+      "type": "ms.vss-build-web.build-results-tab",
+      "description": "Black Duck Risk Report",
+      "targets": [
+        "ms.vss-build-web.build-results-view"
+      ],
+      "properties": {
+        "name": "Black Duck Risk Report",
+        "uri": "static/riskreport.html",
+        "height": "100%"
       }
     }
   ]

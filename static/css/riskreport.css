@@ -1,0 +1,75 @@
+body {
+    overflow: visible !important;
+}
+
+table,
+th,
+td {
+    border: 1px solid #e7e7e7;
+    padding: 5px 5px 5px 10px;
+}
+
+.risk-report {
+    padding: 10px;
+    font-size: 12px;
+}
+
+.total-count {
+    margin-bottom: 20px;
+}
+
+.bom {
+    width: 100%;
+}
+
+.bom-header-row {
+    text-align: left;
+    background-color: #F9F9F9;
+}
+
+.security-risk-header {
+    text-align: center;
+}
+
+.risk-panel {
+    text-align: center;
+    padding: 5px;
+}
+
+.high-vuln-count {
+    padding: 1px 12px 3px 12px;
+    background-color: #9c251f;
+    color: white;
+    border-radius: 2px;
+}
+
+.medium-vuln-count {
+    padding: 1px 12px 3px 12px;
+    background-color: #E78C87;
+    color: white;
+    border-radius: 2px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.low-vuln-count {
+    padding: 1px 12px 3px 12px;
+    background-color: #999999;
+    color: white;
+    border-radius: 2px;
+}
+
+.vuln-count-empty {
+    background-color: #F7F7F7;
+    color: transparent;
+}
+
+.project-version {
+    font-size: 18px;
+    margin-bottom: 10px;
+    font-weight: 100;
+}
+
+.project-version-separator {
+    padding: 0px 10px 5px 10px;
+}
