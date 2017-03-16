@@ -57,11 +57,12 @@ define(["require", "exports", "VSS/Controls", "TFS/DistributedTask/TaskRestClien
                                 $(".risk-report").append(projectVersion);
                                 $(".risk-report").append(bomCount);
                                 $(".risk-report").append(bom);
-                                $(".bom").append("<tr class='bom-header-row'><th>Component</th><th>License</th><th class='security-risk-header'>Security Risk</th></tr>");
+                                $(".bom").append("<tr class='bom-header-row'><th class='policy-status-header'><th class='component-header'>Component</th><th>License</th><th class='security-risk-header'>Security Risk</th></tr>");
                                 for (var i = 0; i < riskObject.totalCount; i++) {
                                     var highVulnClass = "";
                                     var mediumVulnClass = "";
                                     var lowVulnClass = "";
+                                    var policyClass = "";
                                     if (riskObject.components[i].highVulnCount == "0") {
                                         highVulnClass = "high-vuln-count vuln-count-empty";
                                     }
@@ -80,8 +81,21 @@ define(["require", "exports", "VSS/Controls", "TFS/DistributedTask/TaskRestClien
                                     else {
                                         lowVulnClass = "low-vuln-count";
                                     }
-                                    $(".bom-header-row").after("<tr><td>" +
-                                        "<a href='" + riskObject.components[i].componentLink + "' target='_blank'>" +
+                                    console.log(riskObject.components[i].policyStatus);
+                                    switch (riskObject.components[i].policyStatus) {
+                                        case "NOT_IN_VIOLATION":
+                                            policyClass = "not-in-violation";
+                                            break;
+                                        case "IN_VIOLATION":
+                                            policyClass = "fa fa-ban in-violation";
+                                            break;
+                                        case "IN_VIOLATION_OVERRIDDEN":
+                                            policyClass = "fa fa-exclamation-circle in-violation-overridden";
+                                            break;
+                                    }
+                                    $(".bom-header-row").after("<tr><td class='policy-status-icon'>" +
+                                        "<span class='" + policyClass + "'></span></td>" +
+                                        "<td><a href='" + riskObject.components[i].componentLink + "' target='_blank'>" +
                                         riskObject.components[i].component + " " + riskObject.components[i].version + "</a>" +
                                         "</td><td>" + riskObject.components[i].license +
                                         "</td><td>" +

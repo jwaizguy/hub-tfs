@@ -15,7 +15,7 @@ td {
 }
 
 .total-count {
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 
 .bom {
@@ -66,10 +66,38 @@ td {
 
 .project-version {
     font-size: 18px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     font-weight: 100;
 }
 
 .project-version-separator {
     padding: 0px 10px 5px 10px;
+}
+
+.not-in-violation {
+
+}
+
+.in-violation {
+    color: #9c251f;
+    font-size: 14px;
+}
+
+.in-violation-overridden {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.policy-status-header {
+    border-width: 1px 0px 1px 1px;
+}
+
+.component-header {
+    border-width: 1px 1px 1px 0px;
+}
+
+.policy-status-icon {
+    width: 1px;
+    border-right-color: transparent;
+    padding-right: 0px;
 }
