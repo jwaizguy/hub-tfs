@@ -10,7 +10,7 @@ Black Duck Hub is architected to address the challenges facing developers by int
 
 ## Key Features: 
 
-•	Rapid Discovery of Open Source: Rapid scanning and identification of open source libraries, versions, license, and community activity using the Black Duck® KnowledgeBaseTM – the industry’s most complete with detailed data on more than 2 million open source projects and 79,000+ known open source vulnerabilities. 
+•	Rapid Discovery of Open Source: Rapid scanning and identification of open source libraries, versions, license, and community activity using the Black Duck® KnowledgeBase™ – the industry’s most complete with detailed data on more than 2 million open source projects and 79,000+ known open source vulnerabilities. 
 
 •	Identify Open Source Risks: Create an inventory of all open source in use and map to known security vulnerabilities, identifying and prioritizing the severity of the vulnerability and explore remediation steps. 
 
@@ -38,9 +38,15 @@ Policies and rules can be set up to ensure organizations are using healthy open 
 
 Track what projects contain known open source vulnerabilities, and quickly remediate with recommended solutions. 
 
-Black Duck® KnowledgeBaseTM (KB) is the world’s largest knowledge base of open source components and their risks. For component discovery and analysis, it crawls, indexes, and analyzes 8,500+ sources for open source projects and components.  The KB is updated “real-time” with open source project and component updates.  For security analysis, Black Duck has Enhanced Vulnerability Data using multiple sources including VulnDB, NVD and our own security intelligence team focused on making risk data actionable.  This provides you with additional intelligence to aid in risk rating/prioritization as well as actionable guidance for vulnerability remediation/mitigation.
+Black Duck® KnowledgeBase™ (KB) is the world’s largest knowledge base of open source components and their risks. For component discovery and analysis, it crawls, indexes, and analyzes 8,500+ sources for open source projects and components.  The KB is updated “real-time” with open source project and component updates.  For security analysis, Black Duck has Enhanced Vulnerability Data using multiple sources including VulnDB, NVD and our own security intelligence team focused on making risk data actionable.  This provides you with additional intelligence to aid in risk rating/prioritization as well as actionable guidance for vulnerability remediation/mitigation.
 
 ![vulnerability](images/vulnerability.png)
+
+## Black Duck Risk Report
+
+View your scanned project's bill of materials (BOM), along with the associated security risk and policy violations directly from the build output.
+
+![riskreport](images/riskreport.png)
 
 ## Documentation
 
