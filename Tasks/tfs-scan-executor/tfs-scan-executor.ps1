@@ -225,6 +225,11 @@ else {
     $ScanTarget = $env:BUILD_SOURCESDIRECTORY
 }
 
+#Ensure scan target exists
+if (-Not (Test-Path $ScanTarget)) {
+    Write-Error ("ERROR: Scan target {0} does not exist" -f $ScanTarget)
+}
+
 #Execute Hub scan and write logs (for some reason it comes through the error stream)
 Write-Host "INFO: Starting Black Duck Hub scan with the following parameters"
 Write-Host ("INFO: Server URL: {0}" -f $HubUrl)

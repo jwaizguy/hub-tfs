@@ -13,7 +13,7 @@
   "version": {
     "Major": "2",
     "Minor": "0",
-    "Patch": "0"
+    "Patch": "1"
   },
   "minimumAgentVersion": "1.95.0",
   "instanceNameFormat": "Execute a Black Duck Hub scan against your build $(message)",
@@ -93,9 +93,7 @@
   ],
   "execution": {
     "PowerShell3": {
-      "target": "$(currentDirectory)\\tfs-scan-executor.ps1",
-      "argumentFormat": "",
-      "workingDirectory": "$(currentDirectory)"
+      "target": "tfs-scan-executor.ps1"
     }
   }
 }
