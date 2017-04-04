@@ -406,11 +406,19 @@ if ($HubGenerateRiskReport -eq "true") {
             $ComponentVersionId = ($Item.componentVersion -Split "/")[-1]
 
             #Get component version policy status
-            $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/versions/{2}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId, $ComponentVersionId) -Method Get -WebSession $HubSession
+            if ($ComponentVersionId) {
+                $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/versions/{2}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId, $ComponentVersionId) -Method Get -WebSession $HubSession
+                $ComponentLink = ("{0}/#versions/id:{1}/view:overview" -f $HubUrl, $ComponentVersionId)
+            }
+            else {
+                #Component/version could not be found
+                $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId) -Method Get -WebSession $HubSession
+                $ComponentLink = ("{0}/#projects/id:{1}" -f $HubUrl, $ComponentId)
+                $ComponentVersion = "?"
+                $LicenseName = "License Not Found"
+            }
 
             $ComponentPolicyStatus = $ComponentPolicyResponse.approvalStatus
-			
-            $ComponentLink = ("{0}/#versions/id:{1}/view:overview" -f $HubUrl, $ComponentVersionId)
 
             $Components += [PSCUSTOMOBJECT]@{
                 'component' = "$ComponentName";
