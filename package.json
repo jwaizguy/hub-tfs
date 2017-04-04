@@ -1,6 +1,6 @@
 {
     "name": "vsts-extension-hub-tfs",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "description": "Execute a Black Duck Hub scan against your build",
     "scripts": {
         "build": "tsc -p .",
