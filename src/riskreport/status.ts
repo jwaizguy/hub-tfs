@@ -24,6 +24,9 @@ export class StatusSection extends Controls.BaseControl {
                 taskClient.getPlanAttachments(vsoContext.project.id, "build", build.orchestrationPlan.planId, "blackDuckRiskReport").then((taskAttachments) => {
 
                     if (taskAttachments.length === 1) {
+
+                        $(".risk-report-message").remove();
+
                         var recId = taskAttachments[0].recordId;
                         var timelineId = taskAttachments[0].timelineId;
 
@@ -51,8 +54,6 @@ export class StatusSection extends Controls.BaseControl {
 
                             var riskObject = JSON.parse(summaryPageData.replace(/[\u200B-\u200D\uFEFF]/g, ''));
 
-                            var container = $("<div>", { "class": "risk-report" });
-
                             var projectVersion = "<div class='project-version'><span>" +
                                 "<a href='" + riskObject.projectLink + "' target='_blank'>" + riskObject.projectName + "</a></span>" +
                                 "<span class='project-version-separator'><i class='fa fa-caret-right'></i></span><span>" +
@@ -62,7 +63,6 @@ export class StatusSection extends Controls.BaseControl {
 
                             var bom = $("<table>", { "class": "bom" });
 
-                            this._element.append(container);
                             $(".risk-report").append(projectVersion);
                             $(".risk-report").append(bomCount);
                             $(".risk-report").append(bom);

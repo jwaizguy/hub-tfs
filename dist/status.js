@@ -17,7 +17,6 @@ define(["require", "exports", "VSS/Controls", "TFS/DistributedTask/TaskRestClien
             return _super.call(this) || this;
         }
         StatusSection.prototype.initialize = function () {
-            var _this = this;
             _super.prototype.initialize.call(this);
             // Get configuration that's shared between extension and the extension host
             var sharedConfig = VSS.getConfiguration();
@@ -28,6 +27,7 @@ define(["require", "exports", "VSS/Controls", "TFS/DistributedTask/TaskRestClien
                     var taskClient = DT_Client.getClient();
                     taskClient.getPlanAttachments(vsoContext.project.id, "build", build.orchestrationPlan.planId, "blackDuckRiskReport").then(function (taskAttachments) {
                         if (taskAttachments.length === 1) {
+                            $(".risk-report-message").remove();
                             var recId = taskAttachments[0].recordId;
                             var timelineId = taskAttachments[0].timelineId;
                             taskClient.getAttachmentContent(vsoContext.project.id, "build", build.orchestrationPlan.planId, timelineId, recId, "blackDuckRiskReport", "riskReport").then(function (attachementContent) {
@@ -46,14 +46,12 @@ define(["require", "exports", "VSS/Controls", "TFS/DistributedTask/TaskRestClien
                                 }
                                 var summaryPageData = arrayBufferToString(attachementContent);
                                 var riskObject = JSON.parse(summaryPageData.replace(/[\u200B-\u200D\uFEFF]/g, ''));
-                                var container = $("<div>", { "class": "risk-report" });
                                 var projectVersion = "<div class='project-version'><span>" +
                                     "<a href='" + riskObject.projectLink + "' target='_blank'>" + riskObject.projectName + "</a></span>" +
                                     "<span class='project-version-separator'><i class='fa fa-caret-right'></i></span><span>" +
                                     "<a href='" + riskObject.projectVersionLink + "' target='_blank'>" + riskObject.projectVersion + "</a></span></div>";
                                 var bomCount = $("<div>", { "class": "total-count", "text": "BOM Entries: " + riskObject.totalCount });
                                 var bom = $("<table>", { "class": "bom" });
-                                _this._element.append(container);
                                 $(".risk-report").append(projectVersion);
                                 $(".risk-report").append(bomCount);
                                 $(".risk-report").append(bom);
