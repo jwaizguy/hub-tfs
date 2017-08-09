@@ -10,7 +10,7 @@ All versions are available at: https://github.com/blackducksoftware/hub-tfs/rele
 
 ## Documentation
 
-All documentation for hub-tfs can be found on the base project:  https://github.com/blackducksoftware/hub-tfs/wiki
+All documentation for hub-tfs can be found on our [Black Duck Confluence] https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/48108884/Hub+Team+Foundation+Server+Plugin
 
 ## License
 
