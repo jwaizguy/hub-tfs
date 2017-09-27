@@ -32,7 +32,8 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) {
         }
         catch {
             Write-Error ("ERROR: Exception checking scan status")
-            Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+            Write-Error -Exception $_.Exception -Message "Exception occured getting scan url."
+            Write-Error ("RESPONSE: {0}" -f $_.Exception.Response)
             Exit
         }
 		
@@ -279,6 +280,7 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
     catch {
         
         Write-Error ("ERROR: Exception checking hub connection for policy violations")
+        Write-Error -Exception $_.Exception -Message "Exception occured checking hub connection for policy violations."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -304,6 +306,7 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
     }
     catch {
         Write-Error ("ERROR: Exception getting policy status")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting policy status."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -339,6 +342,7 @@ if ($HubGenerateRiskReport -eq "true") {
     }
     catch {
         Write-Error ("ERROR: Exception checking hub connection for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured checking hub connection for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -355,6 +359,7 @@ if ($HubGenerateRiskReport -eq "true") {
     }
     catch {
         Write-Error ("ERROR: Exception getting project version for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting project version for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -365,6 +370,7 @@ if ($HubGenerateRiskReport -eq "true") {
     }
     catch {
         Write-Error ("ERROR: Exception getting aggregate BOM for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting aggregate BOM for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
