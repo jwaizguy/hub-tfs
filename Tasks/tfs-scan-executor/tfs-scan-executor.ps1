@@ -104,6 +104,9 @@ function PhoneHome($HubUrl, $HubVersion, $HubUsername, $HubPassword) {
 
 }
 #####################################################
+#Utilize TLS 1.2 for this session
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #Get Hub Url
 $Service = (Get-VstsInput -Name BlackDuckHubService -Require)
 $ServiceEndpoint = Get-VstsEndpoint -Name $Service
