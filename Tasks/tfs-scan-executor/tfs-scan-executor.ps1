@@ -31,7 +31,9 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) {
             $ScanSummaryResponse = Invoke-RestMethod -Uri $JsonData._meta.href -Method Get -WebSession $HubSession
         }
         catch {
-            Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+            Write-Error ("ERROR: Exception checking scan status")
+            Write-Error -Exception $_.Exception -Message "Exception occured getting scan url."
+            Write-Error ("RESPONSE: {0}" -f $_.Exception.Response)
             Exit
         }
 		
@@ -102,6 +104,9 @@ function PhoneHome($HubUrl, $HubVersion, $HubUsername, $HubPassword) {
 
 }
 #####################################################
+#Utilize TLS 1.2 for this session
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #Get Hub Url
 $Service = (Get-VstsInput -Name BlackDuckHubService -Require)
 $ServiceEndpoint = Get-VstsEndpoint -Name $Service
@@ -262,6 +267,7 @@ else {
 $status = ((Select-String -Path (Join-Path $BuildLogFolder $LogOutput) -Pattern "ERROR: ") -split ": ")[-1]
 
 if ($status) {
+    Write-Error ("ERROR: Exception in scan log output")
     Write-Error "ERROR: " $status
 }
 
@@ -275,6 +281,9 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
         Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
     }
     catch {
+        
+        Write-Error ("ERROR: Exception checking hub connection for policy violations")
+        Write-Error -Exception $_.Exception -Message "Exception occured checking hub connection for policy violations."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -290,6 +299,7 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
         $ProjectVersionResponse = Invoke-RestMethod -Uri $JsonData._meta.links[0].href -Method Get -WebSession $HubSession
     }
     catch {
+        Write-Error ("ERROR: Exception getting project version")
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -298,6 +308,8 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
         $PolicyResponse = Invoke-RestMethod -Uri ("{0}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion) -Method Get -WebSession $HubSession
     }
     catch {
+        Write-Error ("ERROR: Exception getting policy status")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting policy status."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -332,6 +344,8 @@ if ($HubGenerateRiskReport -eq "true") {
         Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
     }
     catch {
+        Write-Error ("ERROR: Exception checking hub connection for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured checking hub connection for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -347,6 +361,8 @@ if ($HubGenerateRiskReport -eq "true") {
         $ProjectVersionResponse = Invoke-RestMethod -Uri $JsonData._meta.links[0].href -Method Get -WebSession $HubSession
     }
     catch {
+        Write-Error ("ERROR: Exception getting project version for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting project version for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -356,6 +372,8 @@ if ($HubGenerateRiskReport -eq "true") {
         $BomResponse = Invoke-RestMethod -Uri ("{0}/components?limit=10000&sortField=riskProfile.categories.VULNERABILITY&ascending=true" -f $ProjectVersionResponse.mappedProjectVersion) -Method Get -WebSession $HubSession
     }
     catch {
+        Write-Error ("ERROR: Exception getting aggregate BOM for risk report")
+        Write-Error -Exception $_.Exception -Message "Exception occured getting aggregate BOM for risk report."
         Write-Error ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
         Exit
     }
@@ -448,7 +466,8 @@ if ($HubGenerateRiskReport -eq "true") {
     $RiskReport | ConvertTo-Json -Compress | Out-File $RiskReportFile
 
     Write-Host "##vso[task.addattachment type=blackDuckRiskReport;name=riskReport;]$RiskReportFile"
-
+    Write-Host "INFO: Generated black duck risk report"
+    Write-Host ("INFO: File at {0}" -f $RiskReportFile)
 }
 
 #Set build state based on policy
@@ -522,6 +541,8 @@ if ($HubSetBuildStateOnPolicyViolation -eq "true") {
         }
     }
 }
+
+Write-Host "INFO: Finished running."
 
 PhoneHome $HubUrl $HubVersion $HubUsername $HubPassword
 
