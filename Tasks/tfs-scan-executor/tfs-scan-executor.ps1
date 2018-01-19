@@ -104,6 +104,9 @@ function PhoneHome($HubUrl, $HubVersion, $HubUsername, $HubPassword) {
 
 }
 #####################################################
+#Validate cert
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+
 #Utilize TLS 1.2 for this session
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -124,6 +127,7 @@ $HubSetBuildStateOnPolicyViolation = Get-VstsInput -Name HubSetBuildStateOnPolic
 $HubBuildState = Get-VstsInput -Name HubBuildState
 $HubGenerateRiskReport = Get-VstsInput -Name HubGenerateRiskReport
 $HubScanTimeout = Get-VstsInput -Name HubScanTimeout -Require
+$HubAcceptSSLCertificate = Get-VstsInput -Name HubAcceptSSLCertificate
 	
 #Constants
 $HostedCli = "download/scan.cli-windows.zip"
@@ -134,6 +138,7 @@ $LogOutput = "CLI_Output.txt"
 $HubScanScript = "scan.cli.bat"
 $RiskReportFilename = "riskreport.json"
 $PolicyState = ""
+$KeyTool = (Join-Path $Env:JAVA_HOME "bin\keytool.exe")
 
 #Folder Locations
 $HubScannerParentLocation = Join-Path $env:AGENT_HOMEDIRECTORY $ScanParent
@@ -221,6 +226,14 @@ if (!(Test-Path($BuildLogFolder))) {
 
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation ("scan.cli-{0}" -f $HubVersion)
 Write-Host ("INFO: Hub scan client found at: {0}" -f $HubScannerChildLocation)
+
+#Location of Hub scan client cacerts
+$CertLocation = (Join-Path $HubScannerChildLocation "jre\lib\security\cacerts")
+
+if ($HubAcceptSSLCertificate -eq "true") {
+    Write-Host "INFO: Adding certificate to Black Duck Hub scan client"
+    & $KeyTool -printcert -rfc -sslserver ([System.Uri]$HubUrl).Host | & $KeyTool -importcert -keystore $CertLocation -storepass changeit -alias bd_hub -noprompt
+}
 
 #Get scan target
 if ($HubScanTarget) {
