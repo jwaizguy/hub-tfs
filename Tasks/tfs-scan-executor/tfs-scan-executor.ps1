@@ -138,7 +138,6 @@ $LogOutput = "CLI_Output.txt"
 $HubScanScript = "scan.cli.bat"
 $RiskReportFilename = "riskreport.json"
 $PolicyState = ""
-$KeyTool = (Join-Path $Env:JAVA_HOME "bin\keytool.exe")
 
 #Folder Locations
 $HubScannerParentLocation = Join-Path $env:AGENT_HOMEDIRECTORY $ScanParent
@@ -227,12 +226,19 @@ if (!(Test-Path($BuildLogFolder))) {
 $HubScannerChildLocation = Join-Path $HubScannerParentLocation ("scan.cli-{0}" -f $HubVersion)
 Write-Host ("INFO: Hub scan client found at: {0}" -f $HubScannerChildLocation)
 
-#Location of Hub scan client cacerts
-$CertLocation = (Join-Path $HubScannerChildLocation "jre\lib\security\cacerts")
-
 if ($HubAcceptSSLCertificate -eq "true") {
-    Write-Host "INFO: Adding certificate to Black Duck Hub scan client"
-    & $KeyTool -printcert -rfc -sslserver ([System.Uri]$HubUrl).Host | & $KeyTool -importcert -keystore $CertLocation -storepass changeit -alias bd_hub -noprompt
+    if (!(Test-Path Env:\JAVA_HOME)) {
+        $KeyTool = $null
+        Write-Host "INFO: Please ensure JAVA_HOME is set on this machine to import the certificate to the scan client keystore"
+    }
+    else {
+        #Location of Hub scan client cacerts
+        $CertLocation = (Join-Path $HubScannerChildLocation "jre\lib\security\cacerts")
+        #Location of Keytool
+        $KeyTool = (Join-Path $Env:JAVA_HOME "bin\keytool.exe")
+        Write-Host "INFO: Adding certificate to Black Duck Hub scan client"
+        & $KeyTool -printcert -rfc -sslserver ([System.Uri]$HubUrl).Host | & $KeyTool -importcert -keystore $CertLocation -storepass changeit -alias bd_hub -noprompt
+    }
 }
 
 #Get scan target
