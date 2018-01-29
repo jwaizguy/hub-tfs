@@ -41,7 +41,7 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) {
             Return
         }
         Else {
-            Start-Sleep -Seconds 3
+            Start-Sleep -Seconds 10
             Continue
         }
     }
@@ -106,9 +106,9 @@ function PhoneHome($HubUrl, $HubVersion, $HubUsername, $HubPassword) {
 #####################################################
 #Validate cert
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
-
-#Utilize TLS 1.2 for this session
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#Set protocols for this session
+$AllProtocols = [System.Net.SecurityProtocolType]"Ssl3,Tls,Tls11,Tls12"
+[System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols
 
 #Get Hub Url
 $Service = (Get-VstsInput -Name BlackDuckHubService -Require)
@@ -404,13 +404,7 @@ if ($HubGenerateRiskReport -eq "true") {
             $ComponentName = $item.componentName
             $ComponentVersion = $item.componentVersionName
 
-            $Licenses = @()
-
-            foreach ($License in $Item.licenses.licenses) {
-                $licenses += $license.licenseDisplay
-            }
-
-            $licenseName = $licenses -Join ", "
+            $LicenseName = $Item.licenses.licenseDisplay
 
             foreach ($Count in $Item.securityRiskProfile.counts) {
 
@@ -432,24 +426,31 @@ if ($HubGenerateRiskReport -eq "true") {
                     }
                 }
             }
-			
+
             $ComponentId = ($Item.component -Split "/")[-1]
             $ComponentVersionId = ($Item.componentVersion -Split "/")[-1]
 
-            #Get component version policy status
-            if ($ComponentVersionId) {
-                $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/versions/{2}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId, $ComponentVersionId) -Method Get -WebSession $HubSession
-                $ComponentLink = ("{0}/#versions/id:{1}/view:overview" -f $HubUrl, $ComponentVersionId)
+            if ([version]$HubVersion -lt [version]"4.1.0") {
+
+                #Get component version policy status
+                if ($ComponentVersionId) {
+                    $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/versions/{2}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId, $ComponentVersionId) -Method Get -WebSession $HubSession
+                    $ComponentLink = ("{0}/#versions/id:{1}/view:overview" -f $HubUrl, $ComponentVersionId)
+                }
+                else {
+                    #Component/version could not be found
+                    $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId) -Method Get -WebSession $HubSession
+                    $ComponentLink = ("{0}/#projects/id:{1}" -f $HubUrl, $ComponentId)
+                    $ComponentVersion = "?"
+                    $LicenseName = "License Not Found"
+                }
+
+                $ComponentPolicyStatus = $ComponentPolicyResponse.approvalStatus
             }
             else {
-                #Component/version could not be found
-                $ComponentPolicyResponse = Invoke-RestMethod -Uri ("{0}/components/{1}/policy-status" -f $ProjectVersionResponse.mappedProjectVersion, $ComponentId) -Method Get -WebSession $HubSession
-                $ComponentLink = ("{0}/#projects/id:{1}" -f $HubUrl, $ComponentId)
-                $ComponentVersion = "?"
-                $LicenseName = "License Not Found"
+                $ComponentPolicyStatus = $Item.policyStatus
+                $ComponentLink = ("{0}/ui/versions/id:{1}/view:overview" -f $HubUrl, $ComponentVersionId)
             }
-
-            $ComponentPolicyStatus = $ComponentPolicyResponse.approvalStatus
 
             $Components += [PSCUSTOMOBJECT]@{
                 'component' = "$ComponentName";
