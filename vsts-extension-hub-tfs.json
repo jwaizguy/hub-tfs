@@ -1,7 +1,7 @@
-﻿{
-  "manifestVersion": 1.0,
+{
+  "manifestVersion": 1,
   "id": "hub-tfs",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "name": "Black Duck Hub",
   "publisher": "black-duck-software",
   "public": true,

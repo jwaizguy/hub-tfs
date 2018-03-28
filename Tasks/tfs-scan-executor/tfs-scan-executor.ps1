@@ -49,21 +49,6 @@ function GetScanStatus($JsonData, $HubSession, $HubScanTimeout) {
     Exit
 }
 
-function CheckHubUrl($HubUrl) {
-    $HTTP_Request = [System.Net.WebRequest]::Create($HubUrl)
-    $HTTP_Response = $HTTP_Request.GetResponse()
-	
-    If ([int]$HTTP_Response.StatusCode -eq 200) { 
-        Write-Host "INFO: Communication with the Hub succeeded." 
-        $HTTP_Response.Close()
-    }
-    Else {
-        Write-Error "ERROR: Communication with the Hub failed. The server may be down, or the Server URL parameter is incorrect."
-        $HTTP_Response.Close()
-        Exit
-    }
-}
-
 function PhoneHome($HubUrl, $HubVersion, $HubUsername, $HubPassword) {
     $RegistrationId = ""
 
@@ -149,16 +134,15 @@ if (($HubUrl.Substring($HubUrl.Length-1) -eq "/")) {
     $HubUrl = $HubUrl.Substring(0, $HubUrl.Length-1) 
 }
 
-#Ensure HubURL is correct, and connectivity can be established. 
-#No point in continuing if we can't connect to the Hub.
-CheckHubUrl $HubUrl
-
 #Establish Session
 try {
     Invoke-RestMethod -Uri ("{0}/j_spring_security_check" -f $HubUrl) -Method Post -Body (@{j_username=$HubUsername;j_password=$HubPassword}) -SessionVariable HubSession -ErrorAction:Stop
 }
 catch {
-    Write-Error ("ERROR: Could not establish session - Unauthorized")
+    Write-Host ("ERROR: Could not establish session with the hub")
+    Write-Host -Exception $_.Exception -Message "Could not communicate with hub."
+    Write-Host ("ERROR: {0}" -f $_.Exception.Response.StatusDescription)
+    Write-Error ("ERROR: Unable to communicate with the hub.")
     Exit
 }
 
